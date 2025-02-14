@@ -8,7 +8,8 @@
 import Foundation
 
 class QuestionFactory: QuestionFactoryProtocol {
-    private let questions: [QuizQuestion] = [
+    
+    let questions: [QuizQuestion] = [
         QuizQuestion(
             image: "The Godfather",
             text: "Рейтинг этого фильма больше чем 6?",

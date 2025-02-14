@@ -28,9 +28,35 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private let questionsAmount: Int = 10
     private var questionFactory: QuestionFactoryProtocol = QuestionFactory()
     private var currentQuestion: QuizQuestion?
+    private lazy var alertPresenter = AlertPresenter(viewController: self)
+    private var statisticService: StatisticServiceProtocol!
+    
+    func showAlert(results: QuizResultsViewModel) {
+        let bestTotal = statisticService.bestGame.total
+        let bestScore = statisticService.bestGame.correct
+        let accuracy = String(format: "%.2f", statisticService.totalAccuracy)
+        let dateString = Date().dateTimeString
+        let allGames = statisticService.gamesCount
+           let alertModel = AlertModel(
+               title: "Этот раунд завершён!",
+               message: "Ваш результат \(correctAnswers)/10\nКолличество сыгранных квизов: \(allGames)\nРекорд: \(bestScore)/\(bestTotal) (\(dateString))\nТочность: \(accuracy)%",
+               buttonText: "Сыграть снова!",
+               completion: restartGame
+           )
+           
+           alertPresenter.present(alertModel: alertModel)
+       }
+       
+       private func restartGame() {
+           statisticService.store(correct: correctAnswers, total: questionsAmount)
+           reset()
+           questionFactory.requestNextQuestion()
+       }
+    
     
     private var currentQuestionIndex = 0
-    private var correctAnswers = 0
+
+    var correctAnswers = 0
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -38,6 +64,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         questionFactory.setup(delegate: self)
         self.questionFactory = questionFactory
         questionFactory.requestNextQuestion()
+        statisticService = StatisticService()
     }
     
     
@@ -47,14 +74,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         guard let question = question else {
             return
         }
-        
-        currentQuestion = question
-        let viewModel = convert(model: question)
-        DispatchQueue.main.async {
-            [weak self] in
-            self?.show(step: viewModel)
+        currentQuestion = question // Сохраняем текущий вопрос
+                let viewModel = convert(model: question)
+                DispatchQueue.main.async {
+                    [weak self] in
+                    self?.show(step: viewModel)
+                }
         }
-    }
     
     // приватный метод, который содержит логику перехода в один из сценариев
     // метод ничего не принимает и ничего не возвращает
@@ -68,17 +94,22 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
                 text: text,
                 buttonText: "Сыграть ещё раз")
             // 3
-            showAlert(result: viewModel)
+            showAlert(results: viewModel)
         } else { // 2
             currentQuestionIndex += 1
             
-            self.questionFactory.requestNextQuestion()
+            questionFactory.requestNextQuestion()
         }
         imageView.layer.masksToBounds = true
         imageView.layer.borderWidth = 0
         imageView.layer.borderColor = nil
     }
     
+    private func reset() {
+        self.currentQuestionIndex = 0
+        self.correctAnswers = 0
+        self.currentQuestion = nil
+    }
     
     private func showAnswerResult(isCorrect: Bool) -> Bool {
         let currentQuestion = currentQuestion
@@ -103,28 +134,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         counterLabel.text = step.questionNumber
     }
     
-    private func showAlert(result: QuizResultsViewModel) {
-        let alert = UIAlertController(
-            title: "Этот раунд окончен!",
-            message: "Ваш результат \(correctAnswers)/10",
-            preferredStyle: .alert)
-        
-        let action = UIAlertAction(title: result.buttonText, style: .default) { [weak self] _ in
-            guard let self = self else { return }
-            self.currentQuestionIndex = 0
-            // сбрасываем переменную с количеством правильных ответов
-            self.correctAnswers = 0
-            
-            // заново показываем первый вопрос
-            questionFactory.requestNextQuestion()
-        }
-    
-    
-    alert.addAction(action)
-    
-    self.present(alert, animated: true, completion: nil)
-    
-}
     
     // приватный метод конвертации, который принимает моковый вопрос и возвращает вью модель для главного экрана
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
@@ -134,6 +143,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)") // 4
         return questionStep
     }
+    
 }
 
 /*
