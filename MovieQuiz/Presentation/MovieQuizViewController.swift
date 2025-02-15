@@ -34,28 +34,26 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     func showAlert(results: QuizResultsViewModel) {
         let bestTotal = statisticService.bestGame.total
         let bestScore = statisticService.bestGame.correct
-        let accuracy = String(format: "%.2f", statisticService.totalAccuracy)
         let dateString = Date().dateTimeString
         let allGames = statisticService.gamesCount
-           let alertModel = AlertModel(
-               title: "Этот раунд завершён!",
-               message: "Ваш результат \(correctAnswers)/10\nКолличество сыгранных квизов: \(allGames)\nРекорд: \(bestScore)/\(bestTotal) (\(dateString))\nТочность: \(accuracy)%",
-               buttonText: "Сыграть снова!",
-               completion: restartGame
-           )
-           
-           alertPresenter.present(alertModel: alertModel)
-       }
-       
-       private func restartGame() {
-           statisticService.store(correct: correctAnswers, total: questionsAmount)
-           reset()
-           questionFactory.requestNextQuestion()
-       }
+        let alertModel = AlertModel(
+            title: "Этот раунд окончен!",
+            message: "Ваш результат \(correctAnswers)/10\nКоличество сыгранных квизов: \(allGames)\nРекорд: \(bestScore)/\(bestTotal) (\(dateString))\nСредняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%",
+            buttonText: "Сыграть ещё раз",
+            completion: restartGame
+        )
+        
+        alertPresenter.present(alertModel: alertModel)
+    }
+    
+    private func restartGame() {
+        reset()
+        questionFactory.requestNextQuestion()
+    }
     
     
     private var currentQuestionIndex = 0
-
+    
     var correctAnswers = 0
     
     override func viewDidLoad() {
@@ -75,17 +73,18 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             return
         }
         currentQuestion = question // Сохраняем текущий вопрос
-                let viewModel = convert(model: question)
-                DispatchQueue.main.async {
-                    [weak self] in
-                    self?.show(step: viewModel)
-                }
+        let viewModel = convert(model: question)
+        DispatchQueue.main.async {
+            [weak self] in
+            self?.show(step: viewModel)
         }
+    }
     
     // приватный метод, который содержит логику перехода в один из сценариев
     // метод ничего не принимает и ничего не возвращает
     private func showNextQuestionOrResults(){
         if currentQuestionIndex == questionsAmount - 1 {
+            statisticService?.store(correct: correctAnswers, total: questionsAmount)
             let text = correctAnswers == questionsAmount ?
             "Поздравляем, вы ответили на 10 из 10!" :
             "Вы ответили на \(correctAnswers) из 10, попробуйте ещё раз!"
@@ -143,7 +142,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)") // 4
         return questionStep
     }
-    
 }
 
 /*

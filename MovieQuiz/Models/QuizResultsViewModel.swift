@@ -8,7 +8,7 @@
 import Foundation
 
 // для состояния "Результат квиза"
-internal struct QuizResultsViewModel {
+struct QuizResultsViewModel {
     let title: String
     let text: String
     let buttonText: String

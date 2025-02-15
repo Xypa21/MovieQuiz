@@ -9,7 +9,6 @@ import Foundation
 
 final class StatisticService: StatisticServiceProtocol{
     
-    
     private let storage: UserDefaults = .standard
     
     private enum Keys: String {
@@ -22,20 +21,15 @@ final class StatisticService: StatisticServiceProtocol{
         case totalQuestions
     }
     
-    
     // Количество сыгранных игр
     var gamesCount: Int {
-        get {
-            storage.integer(forKey: Keys.gamesCount.rawValue)
-        } set {
-            storage.set(newValue, forKey: Keys.gamesCount.rawValue)
-        }
+        get { storage.integer(forKey: Keys.gamesCount.rawValue) }
+        set { storage.set(newValue, forKey: Keys.gamesCount.rawValue) }
     }
+    
     // Лучший результат игры
     var bestGame: GameResult {
-        get {
-            let correct = storage.integer(forKey: Keys.bestGameCorrect
-                .rawValue)
+        get {let correct = storage.integer(forKey: Keys.bestGameCorrect.rawValue)
             let total = storage.integer(forKey: Keys.bestGameTotal.rawValue)
             let dateString = storage.string(forKey: Keys.bestGameDate.rawValue) ?? Date().dateTimeString
             let date = DateFormatter.defaultDateTime.date(from: dateString) ?? Date()
@@ -47,6 +41,7 @@ final class StatisticService: StatisticServiceProtocol{
             storage.set(newValue.date.dateTimeString, forKey: Keys.bestGameDate.rawValue)
         }
     }
+    
     // Общая точность
     var totalAccuracy: Double {
         guard gamesCount > 0,
@@ -60,25 +55,21 @@ final class StatisticService: StatisticServiceProtocol{
     
     // Метод для записи новой статистики
     func store(correct count: Int, total amount: Int) {
-            // Обновляем количество игр
-            gamesCount += 1
-            
-            
-            let totalCorrect = storage.integer(forKey: Keys.totalCorrect.rawValue) + count
-            let totalQuestions = storage.integer(forKey: Keys.totalQuestions.rawValue) + amount
-            storage.set(totalCorrect, forKey: Keys.totalCorrect.rawValue)
-            storage.set(totalQuestions, forKey: Keys.totalQuestions.rawValue)
-            
-            // Рассчитываем новую точность
-            let newTotalAccuracy = Double(totalCorrect) / Double(totalQuestions) * 100.0
-            storage.set(newTotalAccuracy, forKey: Keys.totalAccuracy.rawValue)
-            
-            // Проверяем, является ли текущая игра лучшей
-            let newGame = GameResult(correct: count, total: amount, date: Date())
-            if newGame.isBetterThan(bestGame) {
-                bestGame = newGame
-            }
+        // Обновляем количество игр
+        gamesCount += 1
+        let totalCorrect = storage.integer(forKey: Keys.totalCorrect.rawValue) + count
+        let totalQuestions = storage.integer(forKey: Keys.totalQuestions.rawValue) + amount
+        storage.set(totalCorrect, forKey: Keys.totalCorrect.rawValue)
+        storage.set(totalQuestions, forKey: Keys.totalQuestions.rawValue)
+        // Рассчитываем новую точность
+        let newTotalAccuracy = Double(totalCorrect) / Double(totalQuestions) * 100.0
+        storage.set(newTotalAccuracy, forKey: Keys.totalAccuracy.rawValue)
+        // Проверяем, является ли текущая игра лучшей
+        let newGame = GameResult(correct: count, total: amount, date: Date())
+        if newGame.isBetterThan(bestGame) {
+            bestGame = newGame
         }
+    }
 }
 
 
